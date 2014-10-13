@@ -344,7 +344,13 @@
         CGFloat secondAssetScaleToFitRatio = videoTrack.naturalSize.width/videoTrack.naturalSize.height;
         CGAffineTransform firstAssetScaleFactor = CGAffineTransformMakeScale(secondAssetScaleToFitRatio, firstAssetScaleToFitRatio);
         CGAffineTransform convertedTransform = CGAffineTransformConcat(videoTransform, firstAssetScaleFactor);
-        convertedTransform.tx = videoTrack.naturalSize.width;
+
+        if (videoAssetOrientation_ == UIImageOrientationRight) {
+            convertedTransform.tx = videoTrack.naturalSize.width;
+        } else {
+            convertedTransform.ty = videoTrack.naturalSize.height;
+        }
+        
         [passThroughLayer setTransform:convertedTransform atTime:kCMTimeZero];
     }else{
         [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
