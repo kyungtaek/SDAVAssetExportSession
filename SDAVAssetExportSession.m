@@ -320,17 +320,32 @@
     BOOL isVideoAssetPortrait_ = NO;
     UIImageOrientation videoAssetOrientation_ = UIImageOrientationUp;
     
-    if(videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0) {videoAssetOrientation_= UIImageOrientationRight; isVideoAssetPortrait_ = YES;}
-    if(videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0) {videoAssetOrientation_ = UIImageOrientationLeft; isVideoAssetPortrait_ = YES;}
-    if(videoTransform.a == 1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == 1.0) {videoAssetOrientation_ = UIImageOrientationUp;}
-    if(videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0) {videoAssetOrientation_ = UIImageOrientationDown;}
+    if(videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0) {
+        videoAssetOrientation_= UIImageOrientationRight;
+        isVideoAssetPortrait_ = YES;
+    }
     
-    CGFloat FirstAssetScaleToFitRatio = videoTrack.naturalSize.height / videoTrack.naturalSize.width;
+    if(videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0) {
+        videoAssetOrientation_ = UIImageOrientationLeft;
+        isVideoAssetPortrait_ = YES;
+    }
+    
+    if(videoTransform.a == 1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == 1.0) {
+        videoAssetOrientation_ = UIImageOrientationUp;
+    }
+    
+    if(videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0) {
+        videoAssetOrientation_ = UIImageOrientationDown;
+    }
+    
+    CGFloat firstAssetScaleToFitRatio = videoTrack.naturalSize.height / videoTrack.naturalSize.width;
     
     if(isVideoAssetPortrait_) {
-        CGFloat SecondAssetScaleToFitRatio = videoTrack.naturalSize.width/videoTrack.naturalSize.height;
-        CGAffineTransform FirstAssetScaleFactor = CGAffineTransformMakeScale(SecondAssetScaleToFitRatio,FirstAssetScaleToFitRatio);
-        [passThroughLayer setTransform:CGAffineTransformConcat(videoTrack.preferredTransform, FirstAssetScaleFactor) atTime:kCMTimeZero];
+        CGFloat secondAssetScaleToFitRatio = videoTrack.naturalSize.width/videoTrack.naturalSize.height;
+        CGAffineTransform firstAssetScaleFactor = CGAffineTransformMakeScale(secondAssetScaleToFitRatio, firstAssetScaleToFitRatio);
+        CGAffineTransform convertedTransform = CGAffineTransformConcat(videoTransform, firstAssetScaleFactor);
+        convertedTransform.tx = videoTrack.naturalSize.width;
+        [passThroughLayer setTransform:convertedTransform atTime:kCMTimeZero];
     }else{
         [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
     }
