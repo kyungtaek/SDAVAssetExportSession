@@ -280,7 +280,7 @@
 {
     AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
     AVAssetTrack *videoTrack = [[self.asset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
-
+    
     // get the frame rate from videoSettings, if not set then try to get it from the video track,
     // if not set (mainly when asset is AVComposition) then use the default frame rate of 30
     float trackFrameRate = 0;
@@ -300,26 +300,44 @@
     {
         trackFrameRate = [videoTrack nominalFrameRate];
     }
-
+    
     if (trackFrameRate == 0)
     {
         trackFrameRate = 30;
     }
-
+    
     videoComposition.frameDuration = CMTimeMake(1, trackFrameRate);
     videoComposition.renderSize = [videoTrack naturalSize];
-
-	// Make a "pass through video track" video composition.
-	AVMutableVideoCompositionInstruction *passThroughInstruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
-	passThroughInstruction.timeRange = CMTimeRangeMake(kCMTimeZero, self.asset.duration);
-
-	AVMutableVideoCompositionLayerInstruction *passThroughLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
-
-    [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
-
-	passThroughInstruction.layerInstructions = @[passThroughLayer];
-	videoComposition.instructions = @[passThroughInstruction];
-
+    
+    // Make a "pass through video track" video composition.
+    AVMutableVideoCompositionInstruction *passThroughInstruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
+    passThroughInstruction.timeRange = CMTimeRangeMake(kCMTimeZero, self.asset.duration);
+    
+    AVMutableVideoCompositionLayerInstruction *passThroughLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
+    
+    CGAffineTransform videoTransform = videoTrack.preferredTransform;
+    
+    BOOL isVideoAssetPortrait_ = NO;
+    UIImageOrientation videoAssetOrientation_ = UIImageOrientationUp;
+    
+    if(videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0) {videoAssetOrientation_= UIImageOrientationRight; isVideoAssetPortrait_ = YES;}
+    if(videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0) {videoAssetOrientation_ = UIImageOrientationLeft; isVideoAssetPortrait_ = YES;}
+    if(videoTransform.a == 1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == 1.0) {videoAssetOrientation_ = UIImageOrientationUp;}
+    if(videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0) {videoAssetOrientation_ = UIImageOrientationDown;}
+    
+    CGFloat FirstAssetScaleToFitRatio = videoTrack.naturalSize.height / videoTrack.naturalSize.width;
+    
+    if(isVideoAssetPortrait_) {
+        CGFloat SecondAssetScaleToFitRatio = videoTrack.naturalSize.width/videoTrack.naturalSize.height;
+        CGAffineTransform FirstAssetScaleFactor = CGAffineTransformMakeScale(SecondAssetScaleToFitRatio,FirstAssetScaleToFitRatio);
+        [passThroughLayer setTransform:CGAffineTransformConcat(videoTrack.preferredTransform, FirstAssetScaleFactor) atTime:kCMTimeZero];
+    }else{
+        [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
+    }
+    
+    passThroughInstruction.layerInstructions = @[passThroughLayer];
+    videoComposition.instructions = @[passThroughInstruction];
+    
     return videoComposition;
 }
 
