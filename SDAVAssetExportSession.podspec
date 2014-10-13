@@ -11,7 +11,7 @@ Pod::Spec.new do |s|
   s.license      = { :type => "MIT", :file => "LICENSE" }
   s.author    = "Olivier Poitrey"
   s.platform     = :ios, "6.0"
-  s.source       = { :git => "https://github.com/rs/SDAVAssetExportSession.git", :commit => "726f571" }
+  s.source       = { :git => "https://github.com/kyungtaek/SDAVAssetExportSession.git", :commit => "d15eecc" }
   s.source_files  = "**/*.{h,m}"
   s.requires_arc = true
 end
