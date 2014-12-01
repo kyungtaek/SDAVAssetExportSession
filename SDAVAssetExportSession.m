@@ -238,6 +238,10 @@
             {
                 lastSamplePresentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
                 self.progress = duration == 0 ? 1 : CMTimeGetSeconds(lastSamplePresentationTime) / duration;
+                
+                if([self.delegate respondsToSelector:@selector(progress:)]) {
+                    [self.delegate progress:self.progress];
+                }
 
                 if ([self.delegate respondsToSelector:@selector(exportSession:renderFrame:withPresentationTime:toBuffer:)])
                 {
