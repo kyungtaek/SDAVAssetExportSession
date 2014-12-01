@@ -181,7 +181,7 @@
 
 
 @protocol SDAVAssetExportSessionDelegate <NSObject>
-
+@optional
 - (void)exportSession:(SDAVAssetExportSession *)exportSession renderFrame:(CVPixelBufferRef)pixelBuffer withPresentationTime:(CMTime)presentationTime toBuffer:(CVPixelBufferRef)renderBuffer;
 /**
  *  simply get progress
