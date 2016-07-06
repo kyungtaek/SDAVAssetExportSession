@@ -174,7 +174,7 @@
             [self.writer addInput:self.audioInput];
         }
     }
-    
+
     [self.writer startWriting];
     [self.reader startReading];
     [self.writer startSessionAtSourceTime:CMTimeMake(0, ((AVAssetTrack *)videoTracks[0]).naturalTimeScale)];
@@ -197,7 +197,7 @@
             }
         }
     }];
-    
+
     if (!self.audioOutput) {
         audioCompleted = YES;
     } else {
@@ -238,7 +238,7 @@
             {
                 lastSamplePresentationTime = CMSampleBufferGetPresentationTimeStamp(sampleBuffer);
                 self.progress = duration == 0 ? 1 : CMTimeGetSeconds(lastSamplePresentationTime) / duration;
-                
+
                 if([self.delegate respondsToSelector:@selector(progress:)]) {
                     [self.delegate progress:self.progress];
                 }
@@ -284,7 +284,7 @@
 {
     AVMutableVideoComposition *videoComposition = [AVMutableVideoComposition videoComposition];
     AVAssetTrack *videoTrack = [[self.asset tracksWithMediaType:AVMediaTypeVideo] objectAtIndex:0];
-    
+
     // get the frame rate from videoSettings, if not set then try to get it from the video track,
     // if not set (mainly when asset is AVComposition) then use the default frame rate of 30
     float trackFrameRate = 0;
@@ -304,47 +304,45 @@
     {
         trackFrameRate = [videoTrack nominalFrameRate];
     }
-    
+
     if (trackFrameRate == 0)
     {
         trackFrameRate = 30;
     }
-    
+
     videoComposition.frameDuration = CMTimeMake(1, trackFrameRate);
     videoComposition.renderSize = [videoTrack naturalSize];
-    
+
     // Make a "pass through video track" video composition.
     AVMutableVideoCompositionInstruction *passThroughInstruction = [AVMutableVideoCompositionInstruction videoCompositionInstruction];
     passThroughInstruction.timeRange = CMTimeRangeMake(kCMTimeZero, self.asset.duration);
-    
+
     AVMutableVideoCompositionLayerInstruction *passThroughLayer = [AVMutableVideoCompositionLayerInstruction videoCompositionLayerInstructionWithAssetTrack:videoTrack];
-    
+
     CGAffineTransform videoTransform = videoTrack.preferredTransform;
-    
-    BOOL isVideoAssetPortrait_ = NO;
+
     UIImageOrientation videoAssetOrientation_ = UIImageOrientationUp;
-    
+
     if(videoTransform.a == 0 && videoTransform.b == 1.0 && videoTransform.c == -1.0 && videoTransform.d == 0) {
         videoAssetOrientation_= UIImageOrientationRight;
-        isVideoAssetPortrait_ = YES;
     }
-    
+
     if(videoTransform.a == 0 && videoTransform.b == -1.0 && videoTransform.c == 1.0 && videoTransform.d == 0) {
         videoAssetOrientation_ = UIImageOrientationLeft;
-        isVideoAssetPortrait_ = YES;
     }
-    
+
     if(videoTransform.a == 1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == 1.0) {
         videoAssetOrientation_ = UIImageOrientationUp;
     }
-    
+
     if(videoTransform.a == -1.0 && videoTransform.b == 0 && videoTransform.c == 0 && videoTransform.d == -1.0) {
         videoAssetOrientation_ = UIImageOrientationDown;
     }
-    
+
     CGFloat firstAssetScaleToFitRatio = videoTrack.naturalSize.height / videoTrack.naturalSize.width;
-    
-    if(isVideoAssetPortrait_) {
+
+    if(videoAssetOrientation_ == UIImageOrientationRight || videoAssetOrientation_ == UIImageOrientationLeft) {
+
         CGFloat secondAssetScaleToFitRatio = videoTrack.naturalSize.width/videoTrack.naturalSize.height;
         CGAffineTransform firstAssetScaleFactor = CGAffineTransformMakeScale(secondAssetScaleToFitRatio, firstAssetScaleToFitRatio);
         CGAffineTransform convertedTransform = CGAffineTransformConcat(videoTransform, firstAssetScaleFactor);
@@ -354,15 +352,24 @@
         } else {
             convertedTransform.ty = videoTrack.naturalSize.height;
         }
-        
+
         [passThroughLayer setTransform:convertedTransform atTime:kCMTimeZero];
-    }else{
-        [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
+
+    } else {
+
+        if (videoAssetOrientation_ == UIImageOrientationDown) {
+            CGAffineTransform transform2 = CGAffineTransformMakeScale(-1, -1);
+            transform2 = CGAffineTransformTranslate(transform2, -videoTrack.naturalSize.width, -videoTrack.naturalSize.height);
+            [passThroughLayer setTransform:transform2 atTime:kCMTimeZero];
+        } else {
+            [passThroughLayer setTransform:videoTrack.preferredTransform atTime:kCMTimeZero];
+        }
+
     }
-    
+
     passThroughInstruction.layerInstructions = @[passThroughLayer];
     videoComposition.instructions = @[passThroughInstruction];
-    
+
     return videoComposition;
 }
 
